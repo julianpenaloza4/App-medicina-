@@ -234,4 +234,111 @@ function home(){
  <button data-m=m><b>Emparejar</b><span>Une cada concepto con su respuesta</span></button>
  <button data-m=p><b>Parcial</b><span>30 preguntas, 30 minutos, sin pistas y con nota de 0 a 5</span></button>
  <button data-m=e><b>Examen final</b><span>25 preguntas mixtas con nota</span></button>
- ${S.miss.size?`<button data-m=r><b>Repasar mis fallos (${S.miss.size})</b><span>Solo lo que no dominas</span></button>`:""}
+ ${S.miss.size?`<button data-m=r><b>Repasar mis fallos (${S.miss.size})</b><span>Solo lo que no dominas</span></button>`:""}</div>`;
+ app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{S.t=b.dataset.t;home()});
+ app.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=b.dataset.m;
+  if(m=="c")cards(pick(15));if(m=="q")run(pick(10),"mc");if(m=="tf")run(pick(10),"tf");if(m=="m")match();
+  if(m=="e")run(pick(25),"ex");if(m=="k")caso();if(m=="p")parcial();if(m=="r")run(sh([...S.miss]).slice(0,10),"mc")})}
+function run(ids,kind,k=0,sc=0,bad=[]){
+ if(k>=ids.length)return end(ids.length,sc,bad);
+ const i=ids[k],[t,q,a]=D[i],tf=kind=="tf"||(kind=="ex"&&Math.random()<.3);let o,shown,truth=true;
+ if(tf){o=opts(i).find(x=>x!=a);truth=Math.random()<.5;shown=truth?a:o}else o=opts(i);
+ app.innerHTML=hd()+`<div class=bar><i style="width:${k/ids.length*100}%"></i></div><p class=tag>${E(t)} · ${k+1} de ${ids.length}</p><h2>${E(q)}</h2>`+
+ (tf?`<p class=big>${E(shown)}</p><div class=g><button data-v=1>Verdadero</button><button data-v=0>Falso</button></div>`:o.map(x=>`<button class=op>${E(x)}</button>`).join(""))+`<div id=fb></div>`;
+ const fb=document.getElementById("fb"),bs=[...app.querySelectorAll("button.op,[data-v]")];
+ bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.disabled=true);
+  const ok=tf?(b.dataset.v=="1")==truth:b.textContent==a;
+  if(!tf)bs.forEach(x=>{if(x.textContent==a)x.classList.add("good")});b.classList.add(ok?"good":"bad");
+  if(ok){pts(10+S.st);S.st++;S.miss.delete(i);sc++}else{S.st=0;S.miss.add(i);bad=[...bad,i]}
+  fb.innerHTML=`<p class=${ok?"ok":"no"}>${ok?"¡Correcto! +"+(9+S.st)+" XP":"Incorrecto"}</p><p>${E(q)}: <b>${E(a)}</b></p><button class=nx>Siguiente</button>`;
+  fb.querySelector(".nx").onclick=()=>run(ids,kind,k+1,sc,bad);fb.scrollIntoView({block:"nearest"})})}
+function end(n,sc,bad){const p=Math.round(sc/n*100);
+ app.innerHTML=hd()+`<h1>${p}%</h1><p class=big>${sc} de ${n} correctas. ${p>=85?"Dominado. Pasa a otro tema.":p>=60?"Buen avance: repasa los fallos.":"Aún no se fija: repite en modo tarjetas."}</p>
+ ${bad.length?"<h2>Para repasar</h2>"+bad.map(i=>`<p><b>${E(D[i][1])}</b><br>${E(D[i][2])}</p>`).join(""):""}<button class=nx onclick="home()">Volver al inicio</button>`}
+function cards(q,flip=false){
+ if(!q.length){S.xp+=20;return end(1,1,[])}
+ const i=q[0];app.innerHTML=hd()+`<p class=tag>${E(D[i][0])} · quedan ${q.length}</p><button class="card big" id=cd>${E(flip?D[i][2]:D[i][1])}</button><p class=tag>${flip?"Respuesta":"Toca la tarjeta para ver la respuesta"}</p>`+(flip?`<div class=g><button id=no>Repasar</button><button id=si>Lo sé</button></div>`:"");
+ document.getElementById("cd").onclick=()=>cards(q,!flip);
+ if(flip){document.getElementById("si").onclick=()=>{pts(5);S.miss.delete(i);cards(q.slice(1))};
+  document.getElementById("no").onclick=()=>{S.miss.add(i);cards([...q.slice(1),i])}}}
+function match(){
+ const ids=pick(5);let L=null,left=ids.length;
+ app.innerHTML=hd()+`<h2>Une cada concepto con su respuesta</h2><div class=cols><div id=l></div><div id=r></div></div>`;
+ const l=document.getElementById("l"),r=document.getElementById("r");
+ ids.forEach(i=>{const b=document.createElement("button");b.textContent=D[i][1];b.className="op";b.onclick=()=>{l.querySelectorAll("button").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");L={i,b}};l.append(b)});
+ sh(ids).forEach(i=>{const b=document.createElement("button");b.textContent=D[i][2];b.className="op";b.onclick=()=>{if(!L)return;
+  if(L.i==i){L.b.classList.add("gone");b.classList.add("gone");pts(8);S.miss.delete(i);L=null;if(!--left){pts(10);setTimeout(()=>{app.insertAdjacentHTML("beforeend",`<p class=ok>¡Todo emparejado! +10 XP</p><button class=nx onclick="match()">Otra ronda</button>`)},50)}}
+  else{S.miss.add(L.i);S.st=0;b.classList.add("bad","shake");setTimeout(()=>b.classList.remove("bad","shake"),400)}};r.append(b)});}
+const ET=["Diagnóstico","Paraclínicos","Conducta inicial","Mantenimiento"];
+const C=[
+{t:"EPOC exacerbado",d:"Hombre de 68 años, disnea y esputo purulento",v:"Hombre de 68 años, fumador de 40 paquetes-año, con disnea progresiva y tos crónica. Hace 3 días más disnea y esputo purulento. FR 28, FC 102, SpO2 86% al aire.",s:[
+["Exacerbación de EPOC infecciosa con insuficiencia respiratoria","¿Diagnóstico más probable?",["Neumonía en paciente sin enfermedad previa","Crisis asmática","TEP agudo"]],
+["Gasometría arterial, RX de tórax y hemograma/PCR","¿Qué solicitas primero?",["Solo espirometría en urgencias","Angio-TC pulmonar de rutina","Prueba de caminata de 6 minutos"]],
+["Salbutamol ± ipratropio, prednisolona 40 mg x 5 días, antibiótico x 5 días y O2 Venturi con SpO2 88–92%","¿Conducta inicial?",["O2 al 100% hasta SpO2 de 100%","Teofilina IV y corticoide por 14 días","Solo antibiótico, sin broncodilatador"]],
+["Triple terapia LABA + LAMA + ICS, cesación tabáquica, vacunas y rehabilitación","Tras recuperarse: mMRC 3, 2 exacerbaciones en el año y eosinófilos 350. ¿Mantenimiento?",["SABA solo a demanda","LABA + ICS sin LAMA ni rehabilitación","Azitromicina crónica y suspender inhaladores"]]]},
+{t:"Crisis asmática",d:"Mujer de 24 años con atopia y disnea intensa",v:"Mujer de 24 años con atopia, sibilancias y disnea desde ayer. Habla con palabras aisladas, FR 32, FC 125, SpO2 89%, PEF 40%.",s:[
+["Exacerbación asmática grave","¿Diagnóstico?",["Exacerbación leve","EPOC agudizado","Disfunción de cuerdas vocales"]],
+["PEF o FEV1, SpO2 y gasometría si es grave, sin retrasar el tratamiento","¿Evaluación inicial?",["Prueba de provocación con metacolina","TC de tórax urgente","Esperar espirometría completa antes de tratar"]],
+["Salbutamol + ipratropio, prednisolona 40–50 mg, O2 con meta 92–95% y sulfato de Mg 2 g IV si es refractaria","¿Conducta inicial?",["Antibiótico y montelukast","Sedación por la ansiedad","O2 al 100% y solo observación"]],
+["MART con ICS-formoterol (paso 4), plan de acción escrito y control en 2–7 días","Al alta, ¿mantenimiento?",["SABA solo a demanda","Prednisona 3 meses sin inhalador","Alta sin plan y control en 1 mes"]]]},
+{t:"NAC grave",d:"Hombre de 72 años con confusión y PAS 85",v:"Hombre de 72 años con fiebre, tos con esputo purulento y confusión de 3 días. FR 32, PAS 85, urea 45 mg/dL. RX: consolidación lobar.",s:[
+["NAC grave (CURB-65 de 5)","¿Diagnóstico y gravedad?",["NAC leve ambulatoria","Neumonía nosocomial","EPOC agudizado"]],
+["Hemocultivos por duplicado, esputo con Gram/cultivo, PCR múltiple, antígeno urinario y gases","¿Paraclínicos?",["Ninguno, como en el manejo ambulatorio","TC de tórax de rutina y biopsia","Solo RX de control a las 6 semanas"]],
+["UCI: ceftriaxona 2 g o ampicilina/sulbactam + claritromicina; hidrocortisona si hay choque","¿Conducta inicial?",["Amoxicilina oral ambulatoria","Levofloxacina ambulatoria","Solo claritromicina oral"]],
+["Pasar a vía oral al lograr estabilidad clínica y vacunar (neumococo, influenza, VSR)","¿Seguimiento y prevención?",["Antibiótico IV por 6 semanas","Corticoide oral prolongado","Sin vacunas hasta un nuevo evento"]]]},
+{t:"Tromboembolismo pulmonar",d:"Mujer de 33 años, 6 días tras cesárea",v:"Mujer de 33 años, 6 días tras una cesárea. Disnea súbita y dolor pleurítico. FC 112, SpO2 91%, PA 118/76, pierna izquierda edematosa.",s:[
+["Tromboembolismo pulmonar","¿Diagnóstico probable?",["Neumonía lobar","Crisis de ansiedad","Neumotórax espontáneo"]],
+["Angio-TC pulmonar (Wells probable) con eco-Doppler de MMII y troponina/BNP","¿Paraclínicos?",["Dímero D y anticoagular solo si es normal","Espirometría con broncodilatador","Gammagrafía ósea"]],
+["Anticoagulación inmediata (HBPM o apixabán 10 mg c/12h) y estratificar riesgo","Está estable. ¿Conducta inicial?",["Trombólisis sistémica de entrada","Filtro de VCI de rutina","Aspirina sola"]],
+["3 meses (factor reversible mayor), control a la semana y a los 3 meses, y anticoncepción sin estrógenos","¿Terapia de mantenimiento?",["Indefinida por ser idiopático","Solo 7 días","Anticonceptivo combinado con estrógenos"]]]},
+{t:"ACV isquémico",d:"Hombre de 66 años con FA, hemiparesia y afasia",v:"Hombre de 66 años con FA sin anticoagular. Hemiparesia derecha y afasia hace 2 horas. NIHSS 14, PA 170/95, glicemia 130.",s:[
+["ACV isquémico cardioembólico (ACM izquierda)","¿Diagnóstico?",["ACV hemorrágico por HTA","AIT","Migraña con aura"]],
+["TAC simple urgente + angio-TAC; ASPECTS, glicemia, INR y plaquetas","¿Paraclínicos?",["RMN en 48 horas antes de decidir","Punción lumbar","Solo ECG y esperar"]],
+["Alteplasa 0,9 mg/kg (máx 90) o tenecteplasa 0,25 mg/kg, y trombectomía si hay oclusión de gran vaso","¿Conducta inicial?",["Bajar la PA a 120/80 de forma agresiva","Heparina IV en bolo","Solo ASA y observación"]],
+["DOAC a los 6–7 días (infarto mayor), estatina y control de HTA","¿Prevención secundaria?",["Anticoagular a las 6 horas","DAPT 21 días y suspender anticoagulante","ASA sola de por vida"]]]},
+{t:"Enfermedad de Parkinson",d:"Mujer de 62 años con temblor en reposo",v:"Mujer de 62 años con temblor en reposo en mano derecha, lentitud, rigidez en rueda dentada e hiposmia desde hace 4 años. Cognición normal.",s:[
+["Enfermedad de Parkinson (criterios MDS)","¿Diagnóstico?",["Temblor esencial","Parálisis supranuclear progresiva","Parkinsonismo inducido por fármacos"]],
+["Diagnóstico clínico; RMN para descartar causas secundarias y DaTscan si hay duda","¿Paraclínicos?",["Biopsia cerebral","Punción lumbar de rutina","PET con amiloide obligatorio"]],
+["Agonista dopaminérgico (pramipexol 0,125 mg c/8h) + ejercicio; IMAO-B si los síntomas son leves","¿Conducta inicial a esta edad?",["Levodopa a dosis altas siempre","Anticolinérgicos como primera línea","Esperar a que aparezcan caídas"]],
+["Levodopa/carbidopa + entacapona; amantadina si hay discinesias y DBS si es refractario","Años después con fluctuaciones ON-OFF, ¿mantenimiento?",["Suspender levodopa por wearing-off","Aumentar el agonista hasta dosis tóxica","DBS aunque tenga demencia importante"]]]},
+{t:"Meningitis bacteriana",d:"Hombre de 30 años con fiebre y rigidez nucal",v:"Hombre de 30 años con fiebre, cefalea intensa, rigidez nucal y somnolencia desde ayer. Kernig positivo. Sin focalidad ni papiledema.",s:[
+["Meningitis bacteriana aguda","¿Diagnóstico?",["Meningitis viral benigna","Meningitis tuberculosa crónica","Migraña"]],
+["Hemocultivos, hemograma, PCR/procalcitonina y punción lumbar con citoquímico","¿Paraclínicos?",["TAC y RMN obligatorias antes de cualquier cosa","Solo hemograma","Electroencefalograma"]],
+["Dexametasona + vancomicina + ceftriaxona 2 g c/12h de inmediato, sin esperar estudios","¿Conducta inicial?",["Esperar el LCR para iniciar antibiótico","Aciclovir solo","Ampicilina oral"]],
+["Tratamiento dirigido por cultivo (neumococo: penicilina G o vancomicina) y profilaxis de contactos con rifampicina o ciprofloxacino","¿Mantenimiento y prevención?",["Antibiótico 24 horas y alta","Corticoide por 3 semanas","Sin profilaxis de contactos"]]]},
+{t:"Esclerosis múltiple",d:"Mujer de 27 años con pérdida visual y Lhermitte",v:"Mujer de 27 años con pérdida visual y dolor al mover el ojo derecho hace 5 días; meses antes tuvo parestesias. Defecto pupilar aferente y signo de Lhermitte.",s:[
+["Esclerosis múltiple (neuritis óptica retrobulbar)","¿Diagnóstico?",["ACV isquémico","Meningitis viral","Miastenia gravis"]],
+["RMN con gadolinio (diseminación en espacio y tiempo) y LCR con bandas oligoclonales","¿Paraclínicos?",["Solo TAC simple de cráneo","Electromiografía","DaTscan"]],
+["Metilprednisolona 500 mg–1 g IV por 3–5 días","¿Tratamiento del brote?",["Interferón beta como tratamiento del brote","Natalizumab como brote agudo","Reposo sin tratamiento"]],
+["Terapia modificadora (interferón beta, glatiramero u ocrelizumab), tizanidina o baclofeno para espasticidad y evitar el calor","¿Mantenimiento?",["Corticoide oral crónico","Anticoagulación","Solo sintomáticos sin inmunomodulador"]]]}
+];
+function caso(){app.innerHTML=hd()+`<h1>Casos clínicos</h1><p class=st>Cada caso pasa por diagnóstico, paraclínicos, conducta inicial y mantenimiento.</p><div class=modes>`+C.map((c,i)=>`<button data-c=${i}><b>${E(c.t)}</b><span>${E(c.d)}</span></button>`).join("")+`</div>`;app.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>rc(+b.dataset.c))}
+function rc(n,k=0,sc=0){const c=C[n];
+ if(k>=4){pts(sc*5);rate(sc,4,"Caso: "+c.t,`rc(${n})`,0,[]);return}
+ const [a,q,w]=c.s[k],o=sh([a,...w]);
+ app.innerHTML=hd()+`<div class=bar><i style="width:${k*25}%"></i></div><p class=tag>${E(c.t)} · ${ET[k]} (${k+1} de 4)</p><p class=big>${E(c.v)}</p><h2>${E(q)}</h2>`+o.map(x=>`<button class=op>${E(x)}</button>`).join("")+`<div id=fb></div>`;
+ const fb=document.getElementById("fb"),bs=[...app.querySelectorAll("button.op")];
+ bs.forEach(b=>b.onclick=()=>{bs.forEach(x=>x.disabled=true);const ok=b.textContent==a;
+  bs.forEach(x=>{if(x.textContent==a)x.classList.add("good")});b.classList.add(ok?"good":"bad");
+  if(ok){pts(10);sc++}else S.st=0;
+  fb.innerHTML=`<p class=${ok?"ok":"no"}>${ok?"Correcto":"Incorrecto"}</p><p>Respuesta: <b>${E(a)}</b></p><button class=nx>${k<3?"Siguiente etapa":"Ver resultado"}</button>`;
+  fb.querySelector(".nx").onclick=()=>rc(n,k+1,sc);fb.scrollIntoView({block:"nearest"})})}
+function pts(n){S.xp+=n;S.ses=(S.ses||0)+n;const t=document.createElement("div");t.className="toast";t.textContent="+"+n+" pts";document.body.append(t);setTimeout(()=>t.remove(),900)}
+function rate(sc,n,title,again,x,bad,extra){const p=Math.round(sc/n*100),z=p>=85?["Excelente","ok","Dominas este bloque."]:p>=60?["En la mitad","mid","Vas bien: refuerza los fallos."]:["Por reforzar","no","Aún no se fija: repasa con tarjetas."];
+ app.innerHTML=hd()+`<p class=tag>${E(title)}</p><h1 class=${z[1]}>${z[0]}</h1><p class=big>${sc} de ${n} correctas (${p}%) · ${S.ses||0} puntos en esta sesión<br>${z[2]}</p><div class=meter><b style="left:${p}%"></b><span class=a></span><span class=m></span><span class=c></span></div><p class=tag>Por reforzar &lt; 60 · En la mitad 60–84 · Excelente ≥ 85</p>${extra||""}${bad.length?"<h2>Para repasar</h2>"+bad.map(i=>`<p><b>${E(D[i][1])}</b><br>${E(D[i][2])}</p>`).join(""):""}${again!="home()"?`<button class=nx onclick="${again}">Repetir caso</button>`:""}<button class=nx onclick="home()">Volver al inicio</button>`}
+function end(n,sc,bad){rate(sc,n,"Resultado","home()",0,bad)}
+let TM;
+function parcial(){const ids=pick(30);par(ids,0,[],Date.now())}
+function par(ids,k,res,st){
+ if(k>=ids.length){clearInterval(TM);return pend(ids,res)}
+ const i=ids[k],[t,q,a]=D[i],tf=Math.random()<.3;let shown=a,truth=true;
+ if(tf){const o=opts(i).find(x=>x!=a);truth=Math.random()<.5;shown=truth?a:o}
+ app.innerHTML=hd()+`<div class=bar><i style="width:${k/ids.length*100}%"></i></div><p class=tag>Parcial · ${k+1} de ${ids.length} · <span id=tm></span></p><h2>${E(q)}</h2>`+(tf?`<p class=big>${E(shown)}</p><div class=g><button class=op data-v=1>Verdadero</button><button class=op data-v=0>Falso</button></div>`:opts(i).map(x=>`<button class=op>${E(x)}</button>`).join(""));
+ clearInterval(TM);const tick=()=>{const r=Math.max(0,1800-Math.floor((Date.now()-st)/1000)),e=document.getElementById("tm");if(e)e.textContent=`⏱ ${Math.floor(r/60)}:${String(r%60).padStart(2,"0")}`;if(!r){clearInterval(TM);pend(ids,res)}};tick();TM=setInterval(tick,1000);
+ app.querySelectorAll("button.op").forEach(b=>b.onclick=()=>{const ok=tf?(b.dataset.v=="1")==truth:b.textContent==a;par(ids,k+1,[...res,ok],st)})}
+function pend(ids,res){const r=ids.map((_,j)=>!!res[j]),n=ids.length,sc=r.filter(Boolean).length,nota=(sc/n*5).toFixed(1).replace(".",","),by={},bad=[];
+ ids.forEach((i,j)=>{const t=D[i][0];by[t]=by[t]||[0,0];by[t][1]++;if(r[j]){by[t][0]++;S.miss.delete(i)}else{S.miss.add(i);bad.push(i)}});
+ pts(sc*12);
+ rate(sc,n,"Parcial terminado","home()",0,bad,`<p class=big>Nota: ${nota} / 5,0 · ${sc/n*5>=3?"Aprobado":"No aprobado"}</p><p class=tag>Resultado por tema</p>`+Object.entries(by).map(([t,v])=>`<p class=tag>${E(t)}: ${v[0]} de ${v[1]}</p><div class=bar><i style="width:${v[0]/v[1]*100}%"></i></div>`).join(""))}
+home();
+</script></body></html>
