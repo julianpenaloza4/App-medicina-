@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MedQuest · Estudio activo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f6;--sf:#fff;--ink:#14232e;--mu:#5b6b77;--ac:#0e7c86;--ok:#17915a;--no:#d6455d;--ln:#cfdbe2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f1a22;--sf:#182630;--ink:#e8f0f4;--mu:#93a6b2;--ac:#4fc3cf;--ok:#4cd694;--no:#ff7088;--ln:#2a3d4a;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0f1a22;--sf:#182630;--ink:#e8f0f4;--mu:#93a6b2;--ac:#4fc3cf;--ok:#4cd694;--no:#ff7088;--ln:#2a3d4a;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Bricolage Grotesque",system-ui,sans-serif}
+#app{max-width:640px;margin:auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.logo{font-weight:800;font-size:22px;cursor:pointer}.st{color:var(--mu);font-size:14px}
+h1{font-size:34px;line-height:1.05;margin:8px 0 6px;font-weight:800}h2{font-size:21px;margin:10px 0 14px;line-height:1.3}
+button{font:inherit;color:var(--ink);background:var(--sf);border:1.5px solid var(--ln);border-radius:12px;padding:12px 14px;cursor:pointer;text-align:left}
+button:focus-visible{outline:3px solid var(--ac)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.chips button{padding:6px 11px;border-radius:99px;font-size:14px}
+.chips .on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
+.modes{display:grid;gap:8px}.modes button{display:flex;flex-direction:column;border-left:6px solid var(--ac)}.modes b{font-size:18px}.modes span{color:var(--mu);font-size:14px}
+.op,.row button{display:block;width:100%;margin:7px 0}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bar{height:6px;background:var(--ln);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--ac)}
+.tag{color:var(--mu);font-size:13px;margin:10px 0 0}.big{font-size:19px;font-weight:600;background:var(--sf);border:1.5px solid var(--ln);border-radius:12px;padding:14px}
+.ok{color:var(--ok);font-weight:800;margin:12px 0 2px}.no{color:var(--no);font-weight:800;margin:12px 0 2px}
+.good{background:color-mix(in srgb,var(--ok) 22%,var(--sf))!important;border-color:var(--ok)!important}.bad{background:color-mix(in srgb,var(--no) 22%,var(--sf))!important;border-color:var(--no)!important}
+.nx{background:var(--ac);color:var(--bg);border-color:var(--ac);width:100%;text-align:center;font-weight:600;margin-top:8px}
+.card{min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:21px;font-weight:600;padding:22px;width:100%}
+.sel{border-color:var(--ac)!important;border-width:3px}.gone{opacity:.25;pointer-events:none}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cols button{font-size:14px;padding:10px}
+@media(prefers-reduced-motion:no-preference){.shake{animation:s .3s}@keyframes s{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}}
+.bk{padding:6px 12px;font-weight:600;border-radius:99px}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 64px);left:50%;transform:translateX(-50%);background:var(--ok);color:var(--bg);padding:8px 18px;border-radius:99px;font-weight:800;z-index:9;pointer-events:none}
+.meter{position:relative;display:flex;height:14px;border-radius:9px;overflow:hidden;margin:16px 0 6px}.meter b{position:absolute;top:0;bottom:0;width:5px;background:var(--ink);transform:translateX(-2px);z-index:1}.meter .a{flex:60;background:var(--no)}.meter .m{flex:25;background:#d99a1f}.meter .c{flex:15;background:var(--ok)}
+.mid{color:#d99a1f;font-weight:800}h1.ok,h1.no,h1.mid{margin:8px 0 6px;font-size:34px}
+@media(prefers-reduced-motion:no-preference){.toast{animation:up .9s ease-out forwards}@keyframes up{0%{opacity:0;top:calc(env(safe-area-inset-top,0px) + 84px)}20%{opacity:1}100%{opacity:0;top:calc(env(safe-area-inset-top,0px) + 40px)}}}
+</style></head><body><div id="app"></div>
+<script>
+const D=[
+["EPOC","Criterio espirométrico diagnóstico de EPOC","FEV1/FVC < 0,70 postbroncodilatador"],
+["EPOC","Principal factor de riesgo de EPOC (≈50%)","Tabaquismo"],
+["EPOC","Gen del déficit de alfa-1-antitripsina","SERPINA1"],
+["EPOC","Biomasa: porcentaje de casos de EPOC","30–40%"],
+["EPOC","PRISm","FEV1/FVC ≥ 0,70 con FEV1 y/o FVC < 80%"],
+["EPOC","Pre-EPOC","Síntomas o alteraciones sin obstrucción espirométrica"],
+["EPOC","Etiotipos GOLD 2026: la letra G","Genética (déficit de AAT)"],
+["EPOC","Etiotipo COPD-I","Infecciones (TB, VIH)"],
+["EPOC","GOLD 2 (FEV1 predicho)","50–79%"],
+["EPOC","GOLD 4 (FEV1 predicho)","< 30%"],
+["EPOC","Grupo E de GOLD","≥ 2 exacerbaciones moderadas o ≥ 1 con hospitalización"],
+["EPOC","Inicio en grupo A","Un broncodilatador (SABA, LABA o LAMA)"],
+["EPOC","Inicio en grupos B y E","LABA + LAMA"],
+["EPOC","ICS indicado si eosinófilos","≥ 300 cel/µL (o asma concomitante)"],
+["EPOC","Eosinófilos < 100 cel/µL","No usar ICS (sin eficacia, más neumonía)"],
+["EPOC","Mecanismo de los LAMA","Bloqueo de receptores M3"],
+["EPOC","Roflumilast","Inhibidor PDE4 si FEV1 < 50% y bronquitis crónica"],
+["EPOC","Biológicos en EPOC eosinofílica refractaria","Dupilumab o Mepolizumab"],
+["EPOC","Corticoide en exacerbación","Prednisolona 40 mg/día por 5 días"],
+["EPOC","Meta de SpO2 en EPOC retenedor","88–92% con Venturi"],
+["EPOC","Antibiótico en exacerbación: indicación y duración","Esputo purulento, 3 síntomas cardinales o VM; 5 días"],
+["EPOC","Terapia de elección en IRA hipercápnica acidótica","VMNI (BiPAP)"],
+["EPOC","LTOT: criterio de PaO2 en reposo","≤ 55 mmHg (o SpO2 ≤ 88%)"],
+["EPOC","Única intervención que frena el declive del FEV1","Cesación tabáquica"],
+["EPOC","Índice BODE","BMI, Obstrucción, Disnea, Ejercicio: predice sobrevida"],
+["EPOC","Tamizaje de AAT","A todos los EPOC una vez; < 20% remitir y estudiar familiares"],
+["EPOC","Exacerbación: definición","Empeoramiento respiratorio agudo en menos de 14 días"],
+["Asma","Reversibilidad espirométrica en adultos","FEV1 ↑ ≥ 12% y ≥ 200 mL"],
+["Asma","Dosis de salbutamol en prueba broncodilatadora","400 µg (4 puff con espaciador)"],
+["Asma","FeNO elevado en adultos naïve a ICS","> 50 ppb"],
+["Asma","IL-4 en asma","Cambio de clase a IgE"],
+["Asma","IL-5 en asma","Recluta y activa eosinófilos"],
+["Asma","IL-13 en asma","Moco, hiperreactividad y remodelado"],
+["Asma","Omalizumab","Anti-IgE"],
+["Asma","Benralizumab / Mepolizumab","Anti-IL-5R / anti-IL-5"],
+["Asma","Tezepelumab","Anti-TSLP (con o sin perfil T2)"],
+["Asma","Track 1 preferido de GINA 2026","ICS-formoterol como rescate (AIR / MART)"],
+["Asma","Paso 3 en MART","1 inh ICS-formoterol dosis baja mañana y noche + rescate"],
+["Asma","Cuestionario GINA: 3–4 respuestas positivas","Asma no controlada"],
+["Asma","ACT que indica no control","≤ 19 puntos"],
+["Asma","Exacerbación grave refractaria: sulfato de magnesio","2 g IV en 20 minutos"],
+["Asma","Meta de SpO2 en crisis asmática","92–95%"],
+["Asma","Silencio auscultatorio","Riesgo vital / paro inminente"],
+["Asma","Crisis con anafilaxia","Epinefrina IM primero"],
+["Asma","Seguimiento tras el alta","Control en 2 a 7 días"],
+["NAC","Principal bacteria en NAC en Colombia","Streptococcus pneumoniae"],
+["NAC","CURB-65: R y U","FR ≥ 30 rpm; urea > 19 mg/dL"],
+["NAC","CURB-65 de 0–1","Ambulatorio"],
+["NAC","CURB-65 de 3","Alta complejidad / evaluar UCI"],
+["NAC","CRB-65","CURB sin urea; atención primaria"],
+["NAC","NAC leve, primera línea","Amoxicilina 1 g c/8h por 5 días"],
+["NAC","NAC leve con alergia","Claritromicina o doxiciclina"],
+["NAC","Antibiótico a evitar como primera línea ambulatoria","Fluoroquinolonas respiratorias"],
+["NAC","NAC moderada hospitalizada","Ampicilina/sulbactam o ceftriaxona IV"],
+["NAC","NAC grave en UCI","Betalactámico + claritromicina"],
+["NAC","Cobertura para SAMR","Vancomicina o linezolid"],
+["NAC","Cobertura para Pseudomonas","Cefepime o piperacilina/tazobactam"],
+["NAC","Criterios mayores de UCI","VMI o choque con vasopresor"],
+["NAC","Hidrocortisona en NAC","200 mg/día en NAC grave con choque"],
+["NAC","Oseltamivir en NAC","75 mg c/12h por 5 días si sospecha de influenza"],
+["Pleura","Criterios de Light (exudado si ≥ 1)","Prot LP/S > 0,5; LDH LP/S > 0,6; LDH LP > 2/3 LSN"],
+["Pleura","Gradiente de albúmina que confirma trasudado","> 1,2 g/dL"],
+["Pleura","NT-proBNP de origen cardiogénico","> 1.500 pg/mL"],
+["Pleura","Derrame tuberculoso","Linfocitos > 50%, ADA > 40 U/L"],
+["Pleura","Indicaciones de tubo de tórax","Pus, pH < 7,20, glucosa < 60, LDH > 1.000, Gram (+), loculaciones"],
+["Pleura","Régimen intrapleural MIST-2","tPA 10 mg + DNasa 5 mg c/12h x 6 dosis"],
+["Pleura","Agente de pleurodesis","Talco estéril 4–5 g"],
+["Pleura","Catéter pleural tunelizado","Derrame maligno recurrente o pulmón atrapado"],
+["Pleura","Score RAPID","Renal, Age, Purulence, Infection source, Dietary/albúmina"],
+["TEP","Origen más frecuente del TEP","TVP de miembros inferiores"],
+["TEP","Tríada de Virchow","Estasis, lesión endotelial, hipercoagulabilidad"],
+["TEP","Wells ≤ 4","TEP improbable"],
+["TEP","PERC","Descarta TEP sin dímero D si cumple los 8 criterios"],
+["TEP","Dímero D en YEARS","0 criterios: 1000 µg/L; ≥ 1 criterio: 500 µg/L"],
+["TEP","Estándar de oro diagnóstico","Angio-TC pulmonar"],
+["TEP","Alternativa en embarazo o contraste contraindicado","Gammagrafía V/Q"],
+["TEP","Signo de McConnell","Hipocinesia de pared libre del VD con ápex conservado"],
+["TEP","Patrón S1Q3T3","Onda S en DI, Q y T invertida en DIII"],
+["TEP","Categoría E de AHA/ACC 2026","Falla cardiopulmonar manifiesta (choque)"],
+["TEP","Candidatos a alta ambulatoria","Categorías A, B1 y B2"],
+["TEP","Vasopresor de primera línea","Norepinefrina"],
+["TEP","Enoxaparina en TEP","1 mg/kg SC c/12h"],
+["TEP","HNF en TEP","Bolo 80 UI/kg + 18 UI/kg/h"],
+["TEP","Apixabán en TEP agudo","10 mg c/12h x 7 d, luego 5 mg c/12h"],
+["TEP","Rivaroxabán en TEP agudo","15 mg c/12h x 21 d, luego 20 mg/día"],
+["TEP","Dabigatrán y edoxabán","Requieren 5–10 días de anticoagulación parenteral"],
+["TEP","Indicación del filtro de VCI","TEP + contraindicación absoluta a anticoagular"],
+["TEP","Duración con factor reversible mayor","3 meses"],
+["TEP","Trombólisis sistémica","Alteplasa 100 mg en 2 h (categorías E1–E2)"],
+["TEP","Sospecha de CTEPH","Disnea persistente tras 3 meses; PAPm > 20 mmHg"],
+["Gases","pH normal","7,35–7,45"],
+["Gases","Ecuación de Henderson","[H+] = 24 × PaCO2 / HCO3"],
+["Gases","Fórmula de Winter","PaCO2 = 1,5 × HCO3 + 8 ± 2"],
+["Gases","Brecha aniónica normal","8–12 mEq/L"],
+["Gases","Corrección por albúmina","+2,5 por cada 1 g/dL bajo 4,5"],
+["Gases","BAu negativa","Pérdida gastrointestinal de bicarbonato"],
+["Gases","BAu positiva","Falla renal de acidificación (ATR)"],
+["Gases","ATR tipo IV","Hiperpotasemia, pH urinario < 5,5"],
+["Gases","Delta ratio > 1,2","Alcalosis metabólica agregada"],
+["Gases","Brecha osmolar > 10","Alcoholes tóxicos (metanol, etilenglicol)"],
+["Gases","Antídoto de alcoholes tóxicos","Fomepizol o etanol"],
+["Gases","Bicarbonato en acidosis metabólica","pH ≤ 7,20 o HCO3 ≤ 10 con inestabilidad"],
+["Gases","Origen real de los H+ en hiperlactatemia","Hidrólisis de ATP (LDH consume H+)"],
+["Gases","Lactato tipo A de Cohen y Woods","Hipoperfusión / hipoxia tisular"],
+["Gases","Fármaco que causa lactato tipo B2","Metformina (complejo I)"],
+["Gases","D-lactato","Síndrome de intestino corto; no lo mide el lactato rutinario"],
+["Gases","Acidosis respiratoria aguda vs crónica","HCO3 +1 vs +3,5–4 por cada 10 de PaCO2"],
+["Gases","Alcalosis respiratoria aguda vs crónica","HCO3 −2 vs −4 por cada 10 de PaCO2"],
+["Gases","Alcalosis metabólica: PaCO2 esperada","0,73 × HCO3 + 20 ± 5"],
+["Gases","Sitio de toma de ABG","Arteria radial tras prueba de Allen"],
+["Gases","VBG vs ABG","pH −0,03 a −0,04; PvCO2 +4,4 a 8,6; no usar en choque"],
+["ACV","Presión de perfusión cerebral","PAM − PIC"],
+["ACV","Flujo cerebral: penumbra e infarto","Penumbra 10–20; infarto < 10 mL/100g/min"],
+["ACV","Escala Cincinnati","Asimetría facial, brazo y habla"],
+["ACV","NIHSS 5–15","ACV moderado"],
+["ACV","ASPECTS normal","10 puntos (−1 por región afectada)"],
+["ACV","Wake-up stroke: DWI (+) y FLAIR (−)","ACV reciente (< 4,5 h)"],
+["ACV","Ventana de trombólisis IV","< 4,5 h (hasta 9 h con imagen avanzada)"],
+["ACV","Alteplasa","0,9 mg/kg, máx 90 mg (10% bolo, 90% en 1 h)"],
+["ACV","Tenecteplasa","0,25 mg/kg bolo único, máx 25 mg"],
+["ACV","PA en trombólisis","Antes < 185/110; después < 180/105 por 24 h"],
+["ACV","Contraindicación absoluta: INR y plaquetas","INR > 1,7; plaquetas < 100.000"],
+["ACV","Trombectomía estándar","< 6 h, NIHSS ≥ 6, oclusión de gran vaso"],
+["ACV","DAWN y DEFUSE 3","Trombectomía hasta 24 h y hasta 16 h"],
+["ACV","DAPT en ictus leve o AIT","ASA + clopidogrel por 21 días"],
+["ACV","Inicio de DOAC tras ACV","48 h si leve/moderado; día 6–7 si mayor"],
+["ACV","Edema cerebral en infarto extenso de ACM","Manitol, salina hipertónica, craniectomía"],
+["ACV","Arteria cerebral media","Afasia, negligencia, déficit contralateral"],
+["ACV","Arteria cerebral anterior","Paresia de pierna contralateral y apatía"],
+["ACV","Antihipertensivo IV en ACV","Labetalol 10–20 mg IV o nicardipino"],
+["Parkinson","Lesión de la enfermedad de Parkinson","Pérdida de neuronas dopaminérgicas de la sustancia negra compacta"],
+["Parkinson","Dopamina en las vías directa e indirecta","Estimula D1 (directa) e inhibe D2 (indirecta)"],
+["Parkinson","Signo obligatorio de MDS","Bradicinesia"],
+["Parkinson","Frecuencia del temblor parkinsoniano","4–6 Hz en reposo"],
+["Parkinson","Síntomas prodrómicos","Hiposmia, estreñimiento, trastorno de sueño REM"],
+["Parkinson","Parálisis de mirada vertical + signo Mickey Mouse","PSP"],
+["Parkinson","Parkinsonismo + disautonomía + ataxia","Atrofia multisistémica"],
+["Parkinson","Alucinaciones visuales y fluctuaciones cognitivas","Demencia con cuerpos de Lewy"],
+["Parkinson","Mano ajena y apraxia","Degeneración corticobasal"],
+["Parkinson","Inicio en < 65 años","Agonista dopaminérgico (pramipexol, ropinirol, rotigotina)"],
+["Parkinson","Inicio en ≥ 65–70 años o deterioro cognitivo","Levodopa + carbidopa"],
+["Parkinson","Función de la carbidopa","Evita la degradación periférica de levodopa"],
+["Parkinson","Selegilina y rasagilina","Inhibidores de MAO-B"],
+["Parkinson","Entacapona y opicapona","Inhibidores de COMT (alargan levodopa)"],
+["Parkinson","Fármaco para discinesias","Amantadina"],
+["Parkinson","Dianas de DBS","Núcleo subtalámico o globo pálido interno"],
+["Parkinson","Rescate de episodios OFF","Apomorfina subcutánea"],
+["Parkinson","Signo de la cola de golondrina","Pérdida indica EP (nigrosoma 1)"],
+["Meningitis","Tríada clásica","Fiebre, cefalea y rigidez nucal"],
+["Meningitis","Kernig y Brudzinski","Dolor al extender rodilla; flexión de rodillas al flexionar el cuello"],
+["Meningitis","Agentes en neonatos","S. agalactiae, Listeria, E. coli"],
+["Meningitis","Agentes en adultos","S. pneumoniae y N. meningitidis"],
+["Meningitis","Agentes en inmunocomprometidos","Listeria y Cryptococcus"],
+["Meningitis","LCR bacteriano","Turbio, PMN, proteínas > 100, glucosa < 40"],
+["Meningitis","LCR viral","Cristal de roca, linfocitos, glucosa normal"],
+["Meningitis","TAC antes de la PL si","Focalidad, convulsión, papiledema, AEC o inmunosupresión"],
+["Meningitis","Si la PL se retrasa","No esperar: hemocultivo y antibiótico ya"],
+["Meningitis","Empírico en adultos","Vancomicina + ceftriaxona (+ ampicilina si > 50 años)"],
+["Meningitis","Listeria","Ampicilina 2 g IV c/4h"],
+["Meningitis","Dexametasona","0,6 mg/kg/día, 10–20 min antes del antibiótico"],
+["Meningitis","Empírico en neonatos","Ampicilina + cefotaxima"],
+["Meningitis","Criptococo","Anfotericina B liposomal"],
+["Meningitis","Tríada de Cushing (contraindica PL)","Bradicardia, hipertensión, respiración irregular"],
+["Esclerosis múltiple","Esclerosis múltiple","Enfermedad desmielinizante autoinmune del SNC"],
+["Esclerosis múltiple","Epidemiología","Mujeres 3:1, 20–40 años"],
+["Esclerosis múltiple","Alelo de riesgo","HLA-DRB1*1501"],
+["Esclerosis múltiple","Virus asociado","Epstein-Barr (mimetismo molecular)"],
+["Esclerosis múltiple","Neuritis óptica retrobulbar","Dolor ocular, discromatopsia, escotoma central, Marcus Gunn"],
+["Esclerosis múltiple","Signo de Lhermitte","Descarga eléctrica al flexionar el cuello (médula cervical)"],
+["Esclerosis múltiple","Oftalmoplejía internuclear","Lesión de tronco: diplopía"],
+["Esclerosis múltiple","Diseminación en espacio","≥ 1 lesión típica en 2 de 5 regiones"],
+["Esclerosis múltiple","Diseminación en tiempo","Lesiones con y sin realce, o lesión nueva en seguimiento"],
+["Esclerosis múltiple","Dedos de Dawson","Lesiones perpendiculares a los ventrículos"],
+["Esclerosis múltiple","LCR en EM","Bandas oligoclonales > 2, pleocitosis leve"],
+["Esclerosis múltiple","Brote agudo","Metilprednisolona 500 mg–1 g IV por 3–5 días"],
+["Esclerosis múltiple","Alta eficacia","Ocrelizumab, natalizumab, fingolimod"],
+["Esclerosis múltiple","Natalizumab","Bloquea migración de linfocitos al SNC"],
+["Esclerosis múltiple","Espasticidad","Tizanidina o baclofeno"],
+["Esclerosis múltiple","Fenómeno de Uhthoff","Empeora con calor: evitar calor extremo"]
+];
+const T=[...new Set(D.map(x=>x[0]))],app=document.getElementById("app");
+let S={t:"Todos",xp:0,st:0,miss:new Set()};
+const E=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"),sh=a=>[...a].sort(()=>Math.random()-.5);
+const pool=()=>D.map((x,i)=>i).filter(i=>S.t=="Todos"||D[i][0]==S.t);
+function pick(n){const p=pool(),m=sh(p.filter(i=>S.miss.has(i))).slice(0,Math.ceil(n/3));return sh(m.concat(sh(p.filter(i=>!m.includes(i)))).slice(0,n))}
+function opts(i){const a=D[i][2];let o=D.filter((x,j)=>j!=i&&x[0]==D[i][0]&&x[2]!=a).map(x=>x[2]);if(o.length<3)o=o.concat(D.filter(x=>x[2]!=a).map(x=>x[2]));return sh([a,...sh([...new Set(o)]).slice(0,3)])}
+const hd=(b=1)=>`<header>${b?`<button class=bk onclick="clearInterval(TM);home()">← Menú</button>`:`<span class=logo>MedQuest</span>`}<span class=st>⭐ ${S.xp} XP · 🔥 ${S.st}</span></header>`;
+function home(){
+ app.innerHTML=hd(0)+`<h1>Estudia jugando</h1><p class=st>${D.length} preguntas de ${T.length} temas. Lo que falles vuelve más seguido.</p>
+ <div class=chips>${["Todos",...T].map(t=>`<button class="${t==S.t?"on":""}" data-t="${t}">${t}</button>`).join("")}</div>
+ <div class=modes>
+ <button data-m=c><b>Tarjetas</b><span>Voltea, recuerda y marca si lo sabías</span></button>
+ <button data-m=q><b>Quiz de opción múltiple</b><span>10 preguntas con distractores del mismo tema</span></button>
+ <button data-m=tf><b>Verdadero o falso</b><span>Detecta el dato cambiado</span></button>
+ <button data-m=k><b>Caso clínico completo</b><span>Diagnóstico, paraclínicos, conducta inicial y mantenimiento</span></button>
+ <button data-m=m><b>Emparejar</b><span>Une cada concepto con su respuesta</span></button>
+ <button data-m=p><b>Parcial</b><span>30 preguntas, 30 minutos, sin pistas y con nota de 0 a 5</span></button>
+ <button data-m=e><b>Examen final</b><span>25 preguntas mixtas con nota</span></button>
+ ${S.miss.size?`<button data-m=r><b>Repasar mis fallos (${S.miss.size})</b><span>Solo lo que no dominas</span></button>`:""}
